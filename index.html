@@ -44,14 +44,86 @@ input, button, select, textarea {
 
     .hide { display: none !important; }
     
-    #view-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--main-color) 0%, #004085 100%); padding: 20px; overflow-y: auto; }
-    .login-container { background: rgba(255, 255, 255, 0.95); border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 100%; max-width: 420px; padding: 40px; text-align: center; }
-    .login-logo { height: 70px; object-fit: contain; margin: 0 10px; }
-    .login-instansi { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-top: 10px;}
-    /* TAMBAHKAN KODE INI UNTUK OPD */
-    .login-opd { font-size: 0.95rem; font-weight: 700; text-transform: uppercase; color: #444; letter-spacing: 1px; margin-top: 2px;}
-    .login-sekolah { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; color: var(--main-color); margin-bottom: 15px; }
-    .login-logo2 { height: 90px; object-fit: center; margin: 0 0px; }
+    /* Background utama kita buat lebih hidup dengan animasi gradien bergerak halus */
+    #view-login { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9000; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        /* Gradien biru ke ungu elegan */
+        background: linear-gradient(-45deg, var(--main-color), #6610f2, #0dcaf0, #004085);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        padding: 20px; overflow-y: auto; 
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* WRAPPER UTAMA: Efek Kaca (Glassmorphism) tingkat tinggi */
+    .login-wrapper { 
+        display: flex; width: 100%; max-width: 900px; 
+        background: rgba(255, 255, 255, 0.15); /* Transparan */
+        backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); /* Efek Buram */
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 24px; 
+        box-shadow: 0 30px 60px rgba(0,0,0,0.3); 
+        overflow: hidden; align-items: stretch; 
+    }
+
+    .login-box { padding: 45px; text-align: center; display: flex; flex-direction: column; justify-content: center; flex: 1; z-index: 2; position: relative; }
+
+    /* KOTAK KIRI: Warna pastel lembut, estetik, dan transparan */
+    .login-box-left { 
+        /* Gradien dari putih ke biru muda/ungu muda yang sangat soft */
+        background: linear-gradient(135deg, rgba(224, 234, 252, 0.75) 0%, rgba(207, 222, 243, 0.85) 100%); 
+        border-right: 1px solid rgba(255, 255, 255, 0.5); 
+    }
+    
+    /* Tambahan efek pendaran cahaya (Glow) di sudut kotak kiri biar cantik */
+    .login-box-left::before {
+        content: ''; position: absolute; top: -50px; left: -50px; width: 200px; height: 200px;
+        background: rgba(13, 110, 253, 0.25); border-radius: 50%; filter: blur(40px); z-index: -1;
+    }
+    .login-box-left::after {
+        content: ''; position: absolute; bottom: -50px; right: -50px; width: 200px; height: 200px;
+        background: rgba(102, 16, 242, 0.2); border-radius: 50%; filter: blur(40px); z-index: -1;
+    }
+
+    /* KOTAK KANAN: Putih mengkilap agar form sangat jelas dibaca */
+    .login-box-right { 
+        background: rgba(255, 255, 255, 0.95); 
+    }
+
+    /* Penyesuaian Teks & Logo agar serasi dengan background estetik */
+    .login-instansi { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #4b5563; letter-spacing: 1px; margin-top: 15px;}
+    .login-opd { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; color: #2d3748; letter-spacing: 1px; margin-top: 2px;}
+    .login-sekolah { font-size: 1.3rem; font-weight: 900; text-transform: uppercase; color: var(--main-color); margin-bottom: 15px; text-shadow: 0 2px 4px rgba(13, 110, 253, 0.15);}
+    .login-logo { height: 75px; object-fit: contain; margin: 0 10px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); }
+    .login-logo2 { height: 85px; object-fit: center; margin: 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15)); }
+
+    /* Tombol Navigasi Khusus HP */
+    .btn-mobile-next { display: none; }
+    .btn-mobile-back { display: none; margin-bottom: 20px; text-align: left; cursor: pointer; color: #666; font-weight: bold; font-size: 0.9rem; transition: 0.2s;}
+    .btn-mobile-back:hover { color: var(--main-color); transform: translateX(-5px); }
+
+    /* --- MEDIA QUERY KHUSUS HP --- */
+    @media (max-width: 768px) { 
+        /* Matikan efek kaca pembungkus utama di HP */
+        .login-wrapper { background: transparent; backdrop-filter: none; border: none; box-shadow: none; overflow: visible; flex-direction: column; padding: 0; }
+        
+        .login-box { border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); padding: 35px 20px; min-height: 400px; }
+        
+        /* Di HP, kotak kiri warnanya solid pastel agar teks tetap terbaca bagus */
+        .login-box-left { border-right: none; background: linear-gradient(135deg, rgba(240, 245, 255, 0.98) 0%, rgba(225, 235, 250, 0.98) 100%); }
+        
+        /* Kotak kanan (Form Login) putih solid */
+        .login-box-right { display: none; background: #ffffff; }
+        
+        .btn-mobile-next { display: block; margin-top: 30px; }
+        .btn-mobile-back { display: block; }
+    }
     
     #view-dashboard { width: 100%; min-height: 100vh; position: relative; display: block; }
     .sidebar { width: 250px; height: 100vh; position: fixed; top: 0; left: 0; background: var(--main-color); color: white; padding-top: 20px; z-index: 1000; transition: 0.3s; overflow-y: auto; }
@@ -121,34 +193,73 @@ input, button, select, textarea {
   <button id="btnScrollTop" class="btn btn-primary btn-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
 
   <div id="view-login">
-    <div class="login-container">
-      <div class="login-logos mb-3"><img id="logLogo1" class="login-logo" src=""><img id="logLogo2" class="login-logo" src=""></div>
-      <div class="login-instansi" id="logInstansi">INSTANSI</div>
-<div class="login-opd hide" id="logOpd">OPD</div>
-<div class="login-sekolah" id="logSekolah">LOADING SYSTEM...</div>
-      <hr>
-      <center><div>
-        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiy-QcPa6KHScTMhHyA80pZuyStlekpqfdHVhyphenhyphenF-D9CwYNIqLBYra6v1lIO8ndNYU-xCUQl1oBrreAxnH577Diizy_abGpPVs5ocGnfeChx9z5-VzFYMQ-rO9zz61YFXWDEL_n8Vel_JgrL_AHngRpetF0deDJNQ8H0l4j4qUjDwVWpn2kf6_q2UBKGN8tg/s709/logo%20sidimas%20png.png" alt="Logo" class="login-logo2">
-        <p class="text-muted small mb-4" style="font-weight: 600">Sistem Digital Manajemen Arsip Surat</p> 
-      </div></center>
-      <form onsubmit="prosesLogin(event)" autocomplete="off">
-        <div class="form-floating mb-3 text-start"><input id="u" class="form-control" placeholder="U" required><label>Username</label></div>
-        <div class="input-group mb-4"><div class="form-floating flex-grow-1 text-start"><input id="p" type="password" class="form-control" placeholder="P" required><label>Password</label></div><button class="btn btn-outline-secondary" type="button" onclick="togglePass()"><i class="fas fa-eye" id="iconPass"></i></button></div>
-        <button id="btnLogin" class="btn btn-primary w-100 py-2 fw-bold text-uppercase rounded-pill"><span>Masuk Aplikasi</span><span class="spinner-border spinner-border-sm hide" role="status"></span></button>
-      </form>
-      <div class="mt-4 pt-3 border-top">
-    <p class="text-muted small mb-2 fw-bold">Unduh Versi Aplikasi:</p>
-    <div class="d-flex justify-content-center gap-2">
-        <a href="#" id="btnUnduhWin" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
-            <i class="fab fa-windows me-1"></i> Windows
-        </a>
-        <a href="#" id="btnUnduhAnd" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold shadow-sm">
-            <i class="fab fa-android me-1"></i> Android
-        </a>
+    <div class="login-wrapper">
+      
+      <div class="login-box login-box-left" id="boxLeft">
+        <div class="login-logos mb-3">
+            <img id="logLogo1" class="login-logo" src="">
+            <img id="logLogo2" class="login-logo" src="">
+        </div>
+        <div class="login-instansi" id="logInstansi">INSTANSI</div>
+        <div class="login-opd hide" id="logOpd">OPD</div>
+        <div class="login-sekolah" id="logSekolah">LOADING SYSTEM...</div>
+        <hr>
+        <div class="mt-2">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiy-QcPa6KHScTMhHyA80pZuyStlekpqfdHVhyphenhyphenF-D9CwYNIqLBYra6v1lIO8ndNYU-xCUQl1oBrreAxnH577Diizy_abGpPVs5ocGnfeChx9z5-VzFYMQ-rO9zz61YFXWDEL_n8Vel_JgrL_AHngRpetF0deDJNQ8H0l4j4qUjDwVWpn2kf6_q2UBKGN8tg/s709/logo%20sidimas%20png.png" alt="Logo SiDiMAS" class="login-logo2 mb-2">
+            <p class="text-muted small mb-0" style="font-weight: 600">Sistem Digital Manajemen Arsip Surat</p> 
+        </div>
+
+        <button class="btn btn-primary btn-mobile-next w-100 py-3 fw-bold rounded-pill shadow-sm" onclick="toggleMobileLogin('show')">
+            MASUK APLIKASI <i class="fas fa-arrow-right ms-2"></i>
+        </button>
+
+        <div class="mt-auto pt-4" style="font-size: 0.75rem; color: #6c757d;">
+            &copy; 2026 SiDiMAS | <a href="javascript:void(0)" onclick="modalPrivasi()" class="text-decoration-none">Kebijakan Privasi</a>
+            <br><span style="font-size: 0.7rem;">Powered by: <a href='https://www.farypin-inovasiteknologi.com' target="_blank" style="color:blue">PT Farypin Inovasi Teknologi</a></span>
+        </div>
+      </div>
+
+      <div class="login-box login-box-right" id="boxRight">
+        <div class="btn-mobile-back" onclick="toggleMobileLogin('hide')">
+            <i class="fas fa-chevron-left"></i> Kembali
+        </div>
+
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiy-QcPa6KHScTMhHyA80pZuyStlekpqfdHVhyphenhyphenF-D9CwYNIqLBYra6v1lIO8ndNYU-xCUQl1oBrreAxnH577Diizy_abGpPVs5ocGnfeChx9z5-VzFYMQ-rO9zz61YFXWDEL_n8Vel_JgrL_AHngRpetF0deDJNQ8H0l4j4qUjDwVWpn2kf6_q2UBKGN8tg/s709/logo%20sidimas%20png.png" alt="Logo" class="mx-auto mb-3" style="height: 50px;">
+        <h5 class="fw-bold mb-4" style="color: var(--main-color);">Silakan Login</h5>
+
+        <form onsubmit="prosesLogin(event)" autocomplete="off">
+          <div class="form-floating mb-3 text-start">
+            <input id="u" class="form-control" placeholder="U" required>
+            <label>Username</label>
+          </div>
+          <div class="input-group mb-4">
+            <div class="form-floating flex-grow-1 text-start">
+                <input id="p" type="password" class="form-control" placeholder="P" required>
+                <label>Password</label>
+            </div>
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePass()">
+                <i class="fas fa-eye" id="iconPass"></i>
+            </button>
+          </div>
+          <button id="btnLogin" class="btn btn-primary w-100 py-3 fw-bold text-uppercase rounded-pill shadow-sm">
+            <span>Login Sistem</span><span class="spinner-border spinner-border-sm hide" role="status"></span>
+          </button>
+        </form>
+
+        <div class="mt-4 pt-3 border-top">
+          <p class="text-muted small mb-2 fw-bold">Unduh Versi Aplikasi:</p>
+          <div class="d-flex justify-content-center gap-2">
+            <a href="#" id="btnUnduhWin" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fab fa-windows me-1"></i> Windows
+            </a>
+            <a href="#" id="btnUnduhAnd" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fab fa-android me-1"></i> Android
+            </a>
+          </div>
+        </div>
+      </div>
+
     </div>
-</div>
-    </div>
-    <div class="footer">&copy; 2026 SiDiMAS | All Right Reserved.<br><a href="javascript:void(0)" onclick="modalPrivasi()">Kebijakan Privasi</a> | Powered by : <a href='https://www.farypin-inovasiteknologi.com' target="_blank" style="color:white">PT Farypin Inovasi Teknologi</a></div>
   </div>
 
   <div id="view-dashboard" class="hide">
@@ -567,9 +678,8 @@ input, button, select, textarea {
   const DAFTAR_BACKEND = {
       "smkn1kotaternate": "https://script.google.com/a/macros/admin.sma.belajar.id/s/AKfycbyneiV8N_dRWSRy-xtw9q_7nE2dHnXHGzCaGFgiCzNT4DA8NM9TfX3_3Ro2u-Dt9NFP/exec",
       "sman9kotajambi": "https://script.google.com/macros/s/AKfycbzUVafWd_gjf01KnoIZOrMq4ECgsKrt2XlP5qj2p_YJgUr7_mFyuheGxYqECQGgT6zW/exec",
-      "demosidimas": "https://script.google.com/macros/s/LINK_GAS_DI/exec"
+      "demo": "https://script.google.com/macros/s/LINK_GAS_DISDIK/exec"
   };
- 
 
   let API_URL = "";
 
@@ -1407,6 +1517,19 @@ function cropImageSquare(file, previewId) {
            }); 
     }); 
 }
+
+/* --- FUNGSI ANIMASI KOTAK LOGIN DI HP --- */
+  function toggleMobileLogin(action) {
+      if (action === 'show') {
+          // Sembunyikan kotak kiri, munculkan kotak kanan
+          $('#boxLeft').hide();
+          $('#boxRight').fadeIn(300);
+      } else {
+          // Sembunyikan kotak kanan, kembali ke kotak kiri
+          $('#boxRight').hide();
+          $('#boxLeft').fadeIn(300);
+      }
+  }
 
   /* --- MANAJEMEN USER --- */
   function modalUser(m,u,p,r,n) { $('#uMode').val(m); if(m==='add'){ $('#uName').val('').prop('readonly',false);$('#uPass,#uFull').val(''); } else { $('#uOld').val(u); $('#uName').val(u).prop('readonly',true); $('#uPass').val(p); $('#uRole').val(r); $('#uFull').val(n); } new bootstrap.Modal('#modalUser').show(); }
