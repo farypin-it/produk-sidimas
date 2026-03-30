@@ -7,6 +7,8 @@
     <title>SiDiMAS</title>
     <link rel="icon" type="image/png" href="./imgsidimas.png">
 
+
+  
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,6 +16,8 @@
     
     <meta name="theme-color" content="#0d6efd">
     <link rel="apple-touch-icon" href="./imgsidimas.png">
+
+
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -1187,14 +1191,22 @@ document.getElementById('modalCrop').addEventListener('hidden.bs.modal', functio
 $('#btnCropSave').on('click', function() {
     if(!cropperInstance) return;
     
-    // Tarik hasil crop (ukurannya kita standarkan max 250px supaya ringan)
+    // KOMPRESI: Kita perkecil resolusi kanvas menjadi 100x100 piksel.
+    // Ini akan menurunkan jumlah karakter Base64 secara drastis (aman untuk masuk ke database)
     const canvas = cropperInstance.getCroppedCanvas({
-        width: 250,
-        height: 250,
-        fillColor: 'transparent' // SANGAT PENTING: Mempertahankan background transparan PNG
+        width: 100,
+        height: 100,
+        fillColor: 'transparent' // Mempertahankan background transparan PNG
     });
     
+    // Ekspor ke format PNG
     const base64Data = canvas.toDataURL('image/png');
+    
+    // VALIDASI KEAMANAN: Beri peringatan jika gambar masih terlalu besar (opsional tapi sangat disarankan)
+    if (base64Data.length > 49000) {
+        Swal.fire('File Terlalu Besar', 'Logo ini memiliki terlalu banyak detail/warna sehingga gagal dikompres di bawah limit database. Silakan gunakan gambar logo yang lebih sederhana (warna solid).', 'warning');
+        return;
+    }
     
     // Lempar data ke form pengaturan
     if(currentLogoTarget === 1) {
