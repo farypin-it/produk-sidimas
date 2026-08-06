@@ -1,13 +1,11 @@
 
-
-
 /* --- KONFIGURASI DATABASE BACKEND (MULTI-TENANT VIA URL) --- */
 // Tambahkan daftar sekolah di sini. Kunci (sebelah kiri) harus huruf KECIL semua.
 // Cara aksesnya nanti: domain.github.io/sidimas/?id=demo atau ?id=sman1
 const DAFTAR_BACKEND = {
-    "smkn1kotaternate": "https://script.google.com/a/macros/admin.sma.belajar.id/s/AKfycbyneiV8N_dRWSRy-xtw9q_7nE2dHnXHGzCaGFgiCzNT4DA8NM9TfX3_3Ro2u-Dt9NFP/exec",
-    "sman9kotajambi": "https://script.google.com/macros/s/AKfycbzUVafWd_gjf01KnoIZOrMq4ECgsKrt2XlP5qj2p_YJgUr7_mFyuheGxYqECQGgT6zW/exec",
-    "sman6tanjungjabungbarat": "https://script.google.com/macros/s/AKfycbzRhyVACgeQrfunoYn44PW77IFakBiI2DR6-VBalwpgzYlhzDe94LXMR8pBpjqoPGlGsQ/exec",
+    "smkn1kotaternate": "https://script.google.com/macros/s/AKfycbwBZsf0b4XTh5h6sRDjCiUp-9YwAFsjK-v6BQYoh7DBwZu1JB4CbhoXSQ7ZY-AEr8r0/exec",
+    "sman9kotajambi": "https://script.google.com/macros/s/AKfycbysVuW9crRjHAaARjFWFwHnV4qXzrLpxoLt4dsZAhotPqn5_AMR3CM0CBsRq9N1oNA/exec",
+    "sman6tanjungjabungbarat": "https://script.google.com/macros/s/AKfycbzTUtNRp-hSeST6e0zgiEyi4BO7c-3YHPILalIai9b2ncvd0hyg4ArY10F07FOVoDm0/exec",
     "demo": "https://script.google.com/macros/s/AKfycbwmjBKvzk4JNJyQvAcnJ8-htm7NlcpoY8XbRT2SC_fh6a0jNzamXRDafKIzM_a8atIk/exec"
 };
 
