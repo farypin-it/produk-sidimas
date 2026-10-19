@@ -302,8 +302,27 @@ async function silentSync() {
     }
 }
 
+function updateConnectionBadge() {
+    const badge = $('#badgeKoneksi');
+    if (!badge.length) return;
+    if (navigator.onLine) {
+        badge.removeClass('bg-secondary bg-danger').addClass('bg-success').text('Online');
+    } else {
+        badge.removeClass('bg-success bg-danger').addClass('bg-secondary').text('Offline');
+    }
+}
+
 window.addEventListener('online', () => {
+    updateConnectionBadge();
     silentSync();
+});
+
+window.addEventListener('offline', () => {
+    updateConnectionBadge();
+});
+
+$(document).ready(function () {
+    updateConnectionBadge();
 });
 
 async function collectPendingSyncData() {
