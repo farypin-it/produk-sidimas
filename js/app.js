@@ -1,4 +1,25 @@
 /* --- INIT DATA & DASHBOARD --- */
+function applyEnvironmentVisibility() {
+    const isDesktop = (typeof isElectron !== 'undefined' && isElectron);
+    const role = localStorage.getItem('sidimas_role') || 'admin';
+
+    if (isDesktop) {
+        $('html, body').addClass('is-electron').removeClass('is-web-online');
+        $('.online-only').hide().addClass('hide');
+        if (role === 'staff') {
+            $('.admin-only').hide().addClass('hide');
+            $('.offline-only:not(.admin-only)').removeClass('hide').show();
+        } else {
+            $('.offline-only').removeClass('hide').show();
+        }
+    } else {
+        $('html, body').addClass('is-web-online').removeClass('is-electron');
+        $('.offline-only, #btnSyncMain').hide().addClass('hide');
+        $('.online-only').removeClass('hide').show();
+    }
+}
+window.applyEnvironmentVisibility = applyEnvironmentVisibility;
+
 $(document).ready(function () {
     // JALANKAN CEK URL PERTAMA KALI
     if (!initTenantRouting()) return; // Stop loading jika link salah
@@ -6,15 +27,8 @@ $(document).ready(function () {
     // Muat pengaturan dari cache lalu sinkronkan dari database lokal SQLite
     renderSettingsFromCache();
     loadSettingsFromDB();
+    applyEnvironmentVisibility();
     checkSession();
-    
-    if (typeof isElectron !== 'undefined' && isElectron) {
-        $('.online-only').hide();
-        $('.offline-only').show();
-    } else {
-        $('.offline-only').hide();
-        $('.online-only').show();
-    }
 
     const dateNow = new Date();
     const offset = dateNow.getTimezoneOffset() * 60000;
@@ -379,4 +393,4 @@ function showLoadingTimer2(judul) {
 }
 
 function formatNomorUrut(input) { let val = input.value; if (val === "") return; input.value = String(val).padStart(3, '0'); }
-
+
