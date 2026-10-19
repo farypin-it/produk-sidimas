@@ -30,8 +30,38 @@
     <link href="assets/css/cropper.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css?v=2">
+    <script>
+        // Deteksi dini: Mode Desktop Offline (Electron) vs Web Browser Online
+        window.isElectron = typeof window.sidimas !== 'undefined';
+        if (window.isElectron) {
+            document.documentElement.classList.add('is-electron');
+        } else {
+            document.documentElement.classList.add('is-web-online');
+        }
+    </script>
     <style>
         .hide {
+            display: none !important;
+        }
+
+        /* Sembunyikan tombol sinkronisasi dan elemen offline-only di versi Online Web */
+        html.is-web-online .offline-only,
+        html:not(.is-electron) .offline-only,
+        body.is-web-online .offline-only,
+        body:not(.is-electron) .offline-only,
+        .is-web-online .offline-only,
+        html.is-web-online #btnSyncMain,
+        html:not(.is-electron) #btnSyncMain,
+        body.is-web-online #btnSyncMain,
+        body:not(.is-electron) #btnSyncMain,
+        .is-web-online #btnSyncMain {
+            display: none !important;
+        }
+
+        /* Sembunyikan elemen online-only di versi Desktop Offline (Electron) */
+        html.is-electron .online-only,
+        body.is-electron .online-only,
+        .is-electron .online-only {
             display: none !important;
         }
     </style>
