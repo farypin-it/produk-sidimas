@@ -33,6 +33,30 @@ textarea {
     display: none !important;
 }
 
+/* ============================================================
+   KONTROL TAMPILAN HYBRID: ONLINE WEB vs DESKTOP OFFLINE
+   ============================================================ */
+/* Sembunyikan tombol sinkronisasi dan elemen offline-only di versi Online Web */
+html.is-web-online .offline-only,
+html:not(.is-electron) .offline-only,
+body.is-web-online .offline-only,
+body:not(.is-electron) .offline-only,
+.is-web-online .offline-only,
+html.is-web-online #btnSyncMain,
+html:not(.is-electron) #btnSyncMain,
+body.is-web-online #btnSyncMain,
+body:not(.is-electron) #btnSyncMain,
+.is-web-online #btnSyncMain {
+    display: none !important;
+}
+
+/* Sembunyikan elemen online-only di versi Desktop Offline (Electron) */
+html.is-electron .online-only,
+body.is-electron .online-only,
+.is-electron .online-only {
+    display: none !important;
+}
+
 /* Background utama kita buat lebih hidup dengan animasi gradien bergerak halus */
 /* FIX: Paksa Select2 container selalu 100% lebar, mencegah bug 0px saat diinit di elemen tersembunyi */
 .select2-container {
