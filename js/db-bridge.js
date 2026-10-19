@@ -94,7 +94,7 @@ if (isElectron) {
    ============================================================ */
 const DAFTAR_BACKEND = {
     "sman15tebo": "https://script.google.com/macros/s/AKfycbx-QE31idTvmhqH9FkDY2eqqA1Mpkwpo2nsAdS5yvTrmuXjmrNhTwz9Rc6v0eeFxkA/exec",
-    "smkn1kotaternate": "https://script.google.com/macros/s/AKfycbwBZsf0b4XTh5h6sRDjCiUp-9YwAFsjK-v6BQYoh7DBwZu1JB4CbhoXSQ7ZY-AEr8r0/exec",
+    "smkn1kotaternate": "https://script.google.com/macros/s/AKfycbyruOoI3ORf86_XJmEl3Bcubp8aOCLckE5Dfks3JV7K320RPnlUev43SeaKpcHYpRGP/exec",
     "sman9kotajambi": "https://script.google.com/macros/s/AKfycbysVuW9crRjHAaARjFWFwHnV4qXzrLpxoLt4dsZAhotPqn5_AMR3CM0CBsRq9N1oNA/exec",
     "sman6tanjungjabungbarat": "https://script.google.com/macros/s/AKfycbzTUtNRp-hSeST6e0zgiEyi4BO7c-3YHPILalIai9b2ncvd0hyg4ArY10F07FOVoDm0/exec",
     "demo": "https://"
