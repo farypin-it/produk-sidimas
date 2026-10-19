@@ -13,11 +13,20 @@ function checkSession() {
 
         if (role === 'staff') {
             $('#lblRole').text('Staf Lokal');
-            $('.admin-only').hide(); // Sembunyikan elemen admin-only (seperti Pengaturan)
-            $('[onclick="hapusSurat(this)"]').hide(); // Contoh: Sembunyikan semua tombol hapus
+            $('.admin-only').hide().addClass('hide'); // Sembunyikan elemen admin-only (seperti Pengaturan)
+            $('[onclick="hapusSurat(this)"]').hide().addClass('hide'); // Contoh: Sembunyikan semua tombol hapus
         } else {
             $('#lblRole').text('Admin Lokal');
-            $('.admin-only').show();
+            $('.admin-only').removeClass('hide');
+            if (typeof isElectron !== 'undefined' && isElectron) {
+                $('.admin-only').show();
+            } else {
+                $('.admin-only:not(.offline-only)').show();
+            }
+        }
+
+        if (typeof applyEnvironmentVisibility === 'function') {
+            applyEnvironmentVisibility();
         }
 
         if ($('#view-dashboard').is(':visible') && $('.nav-link.active').length === 0) { nav('home'); }
