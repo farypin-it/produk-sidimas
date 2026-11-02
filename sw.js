@@ -1,0 +1,44 @@
+const CACHE_NAME = 'sidimas-cache-auto';
+
+self.addEventListener('install', (event) => {
+  // Langsung update jika ada versi sw.js baru tanpa harus ditutup aplikasinya
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  // Hapus cache versi lama agar tidak menumpuk
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  // Hanya proses permintaan GET melalui protokol HTTP/HTTPS
+  if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith('http')) return;
+
+  event.respondWith(
+    // Menggunakan opsi { cache: 'no-cache' } memaksa browser mengambil versi terbaru dari server (mengabaikan HTTP cache bawaan)
+    fetch(event.request, { cache: 'no-cache' })
+      .then((networkResponse) => {
+        // Jika internet hidup dan berhasil memuat yang terbaru, simpan ke cache lokal
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      })
+      .catch(() => {
+        // Jika HP sedang offline/tidak ada sinyal, ambil dari cache
+        // ignoreSearch: true memastikan parameter ?id=... diabaikan saat mencari kecocokan file HTML
+        return caches.match(event.request, { ignoreSearch: true });
+      })
+  );
+});
