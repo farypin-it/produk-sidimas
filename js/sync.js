@@ -27,7 +27,14 @@ async function mergePulledRows(tableName, rows, protectedIds = new Set()) {
             const localFileUrl = localRow && typeof localRow.fileUrl === 'string' && localRow.fileUrl.startsWith('data:')
                 ? localRow.fileUrl
                 : null;
-            await localDB[tableName].put(localFileUrl ? { ...row, fileUrl: localFileUrl } : row);
+            const localFileInfo = localRow && localRow.fileInfoRaw && localRow.fileInfoRaw.data
+                ? localRow.fileInfoRaw
+                : null;
+            await localDB[tableName].put({
+                ...row,
+                ...(localFileUrl ? { fileUrl: localFileUrl } : {}),
+                ...(localFileInfo ? { fileInfoRaw: localFileInfo } : {})
+            });
         }
     }
 }
@@ -47,7 +54,7 @@ async function applySyncResponse(res, pendingMasuk = [], pendingKeluar = [], pen
         const result = masukResults.get(String(record.id));
         if (result && result.success === true) {
             const updates = { sync_status: 'synced' };
-            if (result.fileUrl) updates.fileUrl = result.fileUrl;
+            if (!isElectron && result.fileUrl) updates.fileUrl = result.fileUrl;
             await localDB.suratMasuk.update(record.id, updates);
         }
     }
@@ -57,7 +64,7 @@ async function applySyncResponse(res, pendingMasuk = [], pendingKeluar = [], pen
         const result = keluarResults.get(String(record.id));
         if (result && result.success === true) {
             const updates = { sync_status: 'synced' };
-            if (result.fileUrl) updates.fileUrl = result.fileUrl;
+            if (!isElectron && result.fileUrl) updates.fileUrl = result.fileUrl;
             await localDB.suratKeluar.update(record.id, updates);
         }
     }
