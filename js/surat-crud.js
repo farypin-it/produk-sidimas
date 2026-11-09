@@ -820,6 +820,13 @@ function downloadPreviewFile() {
 }
 
 function printPreviewFile() {
+    if (currentPreviewType === 'GAMBAR') {
+        const imgSrc = currentBlobUrl || currentPreviewUrl;
+        if (imgSrc) {
+            printImage(imgSrc);
+            return;
+        }
+    }
     if (currentPreviewType === 'DOCX' || currentPreviewType === 'EXCEL') {
         const preview = document.getElementById('docxPreviewContainer');
         if (!preview || !preview.children.length) {
@@ -2637,6 +2644,7 @@ function openFilePreviewModal(opts) {
     }
 
     $('#btnDownloadPdf').off('click').on('click', downloadPreviewFile);
+    $('#btnPrintPreview').removeClass('d-none').off('click').on('click', printPreviewFile);
     const isLampiranDoc = Boolean((opts && opts.isLampiran) || (opts && opts.archiveData && opts.archiveData.isLampiran) || (filename && /lampiran/i.test(filename)) || (title && /lampiran/i.test(title)));
     if (isLampiranDoc) {
         currentPreviewArchiveData = null;
@@ -2734,10 +2742,22 @@ function openFilePreviewModal(opts) {
             }
         };
         renderExcel();
+    } else if (typeBadge === 'GAMBAR' && !inlineTarget) {
+        $('#docxPreviewContainer').addClass('d-none');
+        const safeImgTitle = String(title).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const imgHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${safeImgTitle}</title><style>body{margin:0;padding:20px;background:#525659;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;box-sizing:border-box;}img{max-width:100%;height:auto;object-fit:contain;background:#fff;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,0.45);}</style></head><body><img src="${blobUrl}" alt="${safeImgTitle}"></body></html>`;
+        const htmlBlob = new Blob([imgHtml], { type: 'text/html' });
+        const frameUrl = URL.createObjectURL(htmlBlob);
+        $('#pdfPreviewFrame').removeClass('d-none').attr('src', frameUrl);
     } else {
         if (!inlineTarget) {
+            let frameSrc = blobUrl;
+            if (/drive\.google\.com/i.test(frameSrc)) {
+                const dm = frameSrc.match(/\/d\/([a-zA-Z0-9_-]+)/) || frameSrc.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (dm && dm[1]) frameSrc = `https://drive.google.com/file/d/${dm[1]}/preview`;
+            }
             $('#docxPreviewContainer').addClass('d-none');
-            $('#pdfPreviewFrame').removeClass('d-none').attr('src', blobUrl);
+            $('#pdfPreviewFrame').removeClass('d-none').attr('src', frameSrc);
         }
     }
 
@@ -2783,34 +2803,99 @@ async function viewFileSurat(jenis, index) {
     const row = getDataByIndex(jenis, index);
     if (!row) return;
     const isMasuk = (jenis === 'masuk');
-    let fileUrl = isMasuk ? row[9] : row[8];
     const recordId = row[0];
+    const noSurat = (isMasuk ? row[4] : row[3]) || (isMasuk ? 'Surat Masuk' : 'Surat Keluar');
+    const perihal = (isMasuk ? row[5] : row[4]) || '';
+    let fileUrl = isMasuk ? row[9] : row[8];
+    let fileName = `Berkas_${jenis}_${String(noSurat).replace(/[^a-zA-Z0-9_\-]/g, '_')}`;
+    let detectedMime = '';
 
     if (isElectron) {
+        // MODE DESKTOP OFFLINE: Buka file yang tersimpan lokal di laptop (SQLite)
         const tableDB = isMasuk ? localDB.suratMasuk : localDB.suratKeluar;
         const localRecord = (await tableDB.toArray()).find(record => String(record.id) === String(recordId));
-        if (localRecord && typeof localRecord.fileUrl === 'string' && localRecord.fileUrl.startsWith('data:')) {
-            fileUrl = localRecord.fileUrl;
-        } else if (localRecord && localRecord.fileInfoRaw && localRecord.fileInfoRaw.data) {
-            fileUrl = `data:${localRecord.fileInfoRaw.mimeType || 'application/octet-stream'};base64,${localRecord.fileInfoRaw.data}`;
-        } else if (fileUrl && /^https?:/i.test(fileUrl)) {
+        if (localRecord) {
+            if (localRecord.fileInfoRaw && localRecord.fileInfoRaw.name) {
+                fileName = localRecord.fileInfoRaw.name;
+            }
+            if (typeof localRecord.fileUrl === 'string' && localRecord.fileUrl.startsWith('data:')) {
+                fileUrl = localRecord.fileUrl;
+            } else if (localRecord.fileInfoRaw && localRecord.fileInfoRaw.data) {
+                detectedMime = localRecord.fileInfoRaw.mimeType || 'application/pdf';
+                fileUrl = `data:${detectedMime};base64,${localRecord.fileInfoRaw.data}`;
+            }
+        }
+
+        // Jika data berasal dari sinkronisasi lama dan file belum tersimpan lokal di SQLite
+        if (fileUrl && /^https?:/i.test(fileUrl)) {
             if (!navigator.onLine || !API_URL) {
-                Swal.fire('Lampiran Belum Tersimpan Lokal', 'Desktop sedang offline dan file surat ini belum memiliki salinan di SQLite. Sambungkan internet dan buka file sekali untuk menyimpannya ke perangkat.', 'warning');
+                Swal.fire('Lampiran Belum Tersimpan Lokal', 'Desktop sedang offline dan file surat ini belum memiliki salinan di laptop (SQLite). Sambungkan internet dan buka file sekali untuk menyimpannya ke perangkat.', 'warning');
                 return;
             }
-            Swal.fire({ title: 'Menyimpan Lampiran ke Perangkat...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Menyimpan Berkas ke Laptop...', text: 'Mengambil berkas untuk disimpan lokal...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
             try {
                 const response = await apiCall('getArsipSuratFile', { jenis, id: recordId });
                 if (!response || response.success !== true || !response.data) {
                     throw new Error(response && response.message || 'Server tidak mengirim isi lampiran.');
                 }
-                fileUrl = `data:${response.mimeType || 'application/octet-stream'};base64,${response.data}`;
-                await tableDB.update(recordId, { fileUrl });
+                detectedMime = response.mimeType || 'application/pdf';
+                if (response.name) fileName = response.name;
+                fileUrl = `data:${detectedMime};base64,${response.data}`;
+                const fileInfoRaw = { name: fileName, mimeType: detectedMime, data: response.data };
+                await tableDB.update(recordId, { fileUrl, fileInfoRaw });
+                row[isMasuk ? 9 : 8] = fileUrl;
                 Swal.close();
             } catch (error) {
                 Swal.close();
                 Swal.fire('Gagal Menyimpan Lampiran Lokal', error.message || String(error), 'error');
                 return;
+            }
+        }
+    } else {
+        // MODE WEB ONLINE: Buka file dari Spreadsheet / Google Drive
+        if (!fileUrl || !fileUrl.startsWith('data:')) {
+            try {
+                const tableDB = isMasuk ? localDB.suratMasuk : localDB.suratKeluar;
+                const localRecord = (await tableDB.toArray()).find(record => String(record.id) === String(recordId));
+                if (localRecord) {
+                    if (localRecord.fileInfoRaw && localRecord.fileInfoRaw.name) {
+                        fileName = localRecord.fileInfoRaw.name;
+                    }
+                    if (typeof localRecord.fileUrl === 'string' && localRecord.fileUrl.startsWith('data:')) {
+                        fileUrl = localRecord.fileUrl;
+                    } else if (localRecord.fileInfoRaw && localRecord.fileInfoRaw.data) {
+                        detectedMime = localRecord.fileInfoRaw.mimeType || 'application/pdf';
+                        fileUrl = `data:${detectedMime};base64,${localRecord.fileInfoRaw.data}`;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        if (fileUrl && /^https?:/i.test(fileUrl)) {
+            Swal.fire({ title: 'Memuat Dokumen dari Spreadsheet...', text: 'Mohon tunggu sebentar...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
+            try {
+                const response = await apiCall('getArsipSuratFile', { jenis, id: recordId });
+                Swal.close();
+                if (response && response.success === true && response.data) {
+                    detectedMime = response.mimeType || 'application/pdf';
+                    if (response.name) fileName = response.name;
+                    fileUrl = `data:${detectedMime};base64,${response.data}`;
+                    row[isMasuk ? 9 : 8] = fileUrl;
+                } else {
+                    const driveMatch = String(fileUrl).match(/\/d\/([a-zA-Z0-9_-]+)/) || String(fileUrl).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                    if (driveMatch && driveMatch[1]) {
+                        fileUrl = `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+                    }
+                }
+            } catch (err) {
+                Swal.close();
+                const driveMatch = String(fileUrl).match(/\/d\/([a-zA-Z0-9_-]+)/) || String(fileUrl).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (driveMatch && driveMatch[1]) {
+                    fileUrl = `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+                } else {
+                    Swal.fire('Gagal Memuat Dokumen', err.message || String(err), 'error');
+                    return;
+                }
             }
         }
     }
@@ -2820,11 +2905,30 @@ async function viewFileSurat(jenis, index) {
         return;
     }
 
-    const detailRow = row.slice();
-    detailRow[isMasuk ? 9 : 8] = fileUrl;
-    modalInput(jenis, 'view');
-    fillForm(jenis, detailRow);
-    previewFromModalSurat(jenis);
+    let title = `${noSurat}` + (perihal ? ` - ${perihal}` : '');
+    let typeBadge = 'PDF';
+    const mimeMatch = String(fileUrl).match(/^data:(.*?);base64,/i);
+    const effectiveMime = (detectedMime || (mimeMatch ? mimeMatch[1] : '')).toLowerCase();
+    const lowerName = String(fileName).toLowerCase();
+    const lowerUrl = String(fileUrl).toLowerCase();
+
+    if (effectiveMime.includes('pdf') || /\.pdf($|\?)/i.test(lowerUrl) || lowerName.endsWith('.pdf')) {
+        typeBadge = 'PDF';
+    } else if (effectiveMime.startsWith('image/') || /\.(jpe?g|png|gif|webp)($|\?)/i.test(lowerUrl) || /\.(jpe?g|png|gif|webp)$/i.test(lowerName)) {
+        typeBadge = 'GAMBAR';
+    } else if (effectiveMime.includes('word') || effectiveMime.includes('officedocument.wordprocessingml') || /\.docx?($|\?)/i.test(lowerUrl) || /\.docx?$/i.test(lowerName)) {
+        typeBadge = 'DOCX';
+    } else if (effectiveMime.includes('sheet') || effectiveMime.includes('excel') || /\.xlsx?($|\?)/i.test(lowerUrl) || /\.xlsx?$/i.test(lowerName)) {
+        typeBadge = 'EXCEL';
+    }
+
+    // Langsung buka modal iframe dokumen (#mdlPdfPreview), bukan modal form agenda
+    openFilePreviewModal({
+        title: title,
+        typeBadge: typeBadge,
+        dataUrl: fileUrl,
+        filename: fileName
+    });
 }
 
 /* ================= EXPORT & CRUD ================= */
@@ -3234,8 +3338,17 @@ function modalInput(j, mode) {
     }
     try { $('#inJenisK').trigger('change'); } catch (e) { }
     $('#btnViewAttachedMasuk, #btnViewAttachedKeluar').addClass('hide').html('');
+    $('#suratInlinePreviewContainer').addClass('d-none').hide().empty();
     $('#modalSurat').find('input,textarea,select').prop('disabled', false); $('#divMasuk').find('input,textarea,select').prop('disabled', true); $('#divKeluar').find('input,textarea,select').prop('disabled', true);
-    if (mode === 'view') { $('#judulModal').text('Detail Data'); $('#btnSimpan').hide(); $('#modalSurat .modal-body').find('input,textarea,select').prop('disabled', true); } else { $('#judulModal').text(mode === 'add' ? 'Input Baru' : 'Edit Data'); }
+    if (mode === 'view') {
+        $('#judulModal').text('Detail Data Agenda');
+        $('#btnSimpan').hide();
+        $('#wrapUploadMasuk, #wrapUploadKeluar').addClass('hide');
+        $('#modalSurat .modal-body').find('input,textarea,select').prop('disabled', true);
+    } else {
+        $('#judulModal').text(mode === 'add' ? 'Input Baru' : 'Edit Data Agenda');
+        $('#wrapUploadMasuk, #wrapUploadKeluar').removeClass('hide');
+    }
     if (j === 'masuk') { $('#divMasuk').removeClass('hide'); if (mode !== 'view') { $('#divMasuk').find('input,textarea,select').prop('disabled', false); $('.req-in').prop('required', true); } } else { $('#divKeluar').removeClass('hide'); if (mode !== 'view') { $('#divKeluar').find('input,textarea,select').prop('disabled', false); $('.req-out').prop('required', true); } }
     new bootstrap.Modal('#modalSurat').show();
 }
@@ -3244,6 +3357,8 @@ function viewSurat(jenis, index) { const row = getDataByIndex(jenis, index); mod
 function editSurat(jenis, index) { const row = getDataByIndex(jenis, index); modalInput(jenis, 'edit'); $('#mId').val(row[0]); fillForm(jenis, row); }
 
 function fillForm(jenis, row) {
+    $('#suratInlinePreviewContainer').addClass('d-none').hide().empty();
+    const isEditMode = ($('#mMode').val() === 'edit');
     if (jenis === 'masuk') {
         $('#inTglTerima').val(row[1]);
         $('#inPengirim').val(row[2]);
@@ -3256,12 +3371,8 @@ function fillForm(jenis, row) {
         $('#mFileLama').val(row[9]);
 
         const fUrl = row[9];
-        if (fUrl && fUrl.length > 5 && fUrl !== '-') {
-            $('#btnViewAttachedMasuk').html(`
-                <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm mt-1" onclick="previewFromModalSurat('masuk')">
-                    <i class="fas fa-eye"></i> <span>Lihat Berkas Terlampir (Preview)</span>
-                </button>
-            `).removeClass('hide');
+        if (isEditMode && fUrl && fUrl.length > 5 && fUrl !== '-') {
+            $('#btnViewAttachedMasuk').html('<div class="small text-success mt-1"><i class="fas fa-check-circle me-1"></i>Berkas sudah terlampir (Biarkan kosong jika tidak ingin mengganti berkas)</div>').removeClass('hide');
         } else {
             $('#btnViewAttachedMasuk').addClass('hide').html('');
         }
@@ -3278,12 +3389,8 @@ function fillForm(jenis, row) {
         $('#mFileLama').val(row[8]);
 
         const fUrl = row[8];
-        if (fUrl && fUrl.length > 5 && fUrl !== '-') {
-            $('#btnViewAttachedKeluar').html(`
-                <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm mt-1" onclick="previewFromModalSurat('keluar')">
-                    <i class="fas fa-eye"></i> <span>Lihat Berkas Terlampir (Preview)</span>
-                </button>
-            `).removeClass('hide');
+        if (isEditMode && fUrl && fUrl.length > 5 && fUrl !== '-') {
+            $('#btnViewAttachedKeluar').html('<div class="small text-success mt-1"><i class="fas fa-check-circle me-1"></i>Berkas sudah terlampir (Biarkan kosong jika tidak ingin mengganti berkas)</div>').removeClass('hide');
         } else {
             $('#btnViewAttachedKeluar').addClass('hide').html('');
         }
@@ -3300,7 +3407,7 @@ function previewFromModalSurat(jenis) {
     const perihal = (jenis === 'masuk') ? $('#inPerihalM').val() : $('#inPerihalK').val();
 
     let title = `${noSurat}` + (perihal ? ` - ${perihal}` : '');
-    let typeBadge = 'BERKAS';
+    let typeBadge = 'PDF';
     if (fUrl.startsWith('data:application/pdf') || /\.pdf($|\?)/i.test(fUrl)) typeBadge = 'PDF';
     else if (fUrl.startsWith('data:image/') || /\.(jpe?g|png|gif|webp)($|\?)/i.test(fUrl)) typeBadge = 'GAMBAR';
     else if (fUrl.includes('word') || /\.docx?($|\?)/i.test(fUrl)) typeBadge = 'DOCX';
@@ -3310,7 +3417,6 @@ function previewFromModalSurat(jenis) {
         title: title,
         typeBadge: typeBadge,
         dataUrl: fUrl,
-        inlineTarget: '#suratInlinePreviewContainer',
         filename: `Berkas_${jenis}_${noSurat.replace(/[^a-zA-Z0-9_\-]/g, '_')}`
     });
 }
